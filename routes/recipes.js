@@ -5,27 +5,36 @@ const Recipe = require('../models/recipe');
 
 router.get('/search', async (req, res) => {
   try {
-    // Retrieve the saved ingredients from the database
-    const ingredients = await Ingredient.find();
+    const { ingredients } = req.query;
 
-    // Search for recipes using the retrieved ingredients
-    const recipes = await searchRecipes(ingredients);
+    // Convert the ingredients string into an array
+    const ingredientsArray = ingredients.split(',');
 
-    // Send the recipes as a response
-    res.json(recipes);
+    // Find recipes containing all specified ingredients
+    const recipes = await Recipe.find({
+      ingredients: { $all: ingredientsArray },
+    });
+
+    res.status(200).json(recipes);
   } catch (error) {
-    res.status(500).json({ message: 'Error searching for recipes' });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-// get all recipes
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
+  const { ingredients } = req.query;
   try {
-    const recipes = await Recipe.find();
-    //returns data in json format
-    res.json(recipes);
-  } catch (err) {
-    res.send("Error " + err);
+    const query = ingredients
+      ? {
+          ingredients: { $all: ingredients.split(',') },
+        }
+      : {};
+
+    const recipes = await Recipe.find(query);
+    res.status(200).json(recipes);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching recipes' });
   }
 });
 
@@ -34,18 +43,11 @@ router.get("/:id", async (req, res) => {
   try {
     //params cause finding by url
     const recipes = await Recipe.findOne({ id: req.params.id });
-    //await Recipe.findById(req.params.id);
     //returns data in json format
     res.json(recipes);
   } catch (err) {
     res.send("Error " + err);
   }
 });
-
-async function searchRecipes(ingredients) {
-  const ingredientNames = ingredients.map((ingredient) => ingredient.name);
-  const recipes = await Recipe.find({ ingredients: { $in: ingredientNames } });
-  return recipes;
-}
 
 module.exports = router; 
