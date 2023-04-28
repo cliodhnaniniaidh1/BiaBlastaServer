@@ -7,11 +7,10 @@ app.use(express.json());
 
 app.use(cors({ origin: "http://localhost:3000" }));
 
-const ingredientsRoute = require('./routes/selected-ingredients');
-const recipesRoute = require('./routes/recipes');
-const usersRoute = require('./routes/users');
-const favouriteRoute = require('./routes/favourites');
-const mealPlanRoute = require('./routes/mealplans');
+const ingredientsRoute = require("./routes/selected-ingredients");
+const recipesRoute = require("./routes/recipes");
+const favouriteRoute = require("./routes/favourites");
+const mealPlanRoute = require("./routes/mealplans");
 
 // connect to MongoDB database
 dotenv.config(); // Load environment variables
@@ -24,11 +23,10 @@ mongoose
   .then(() => console.log("Connected to MongoDB Atlas"))
   .catch((err) => console.error("Failed to connect to MongoDB Atlas", err));
 
-  app.use('/selected-ingredients', ingredientsRoute);
-  app.use('/recipes', recipesRoute);
-  app.use('/favourite', favouriteRoute);
-  app.use('/mealplan', mealPlanRoute);
-  app.use('/users', usersRoute);
+app.use("/selected-ingredients", ingredientsRoute);
+app.use("/recipes", recipesRoute);
+app.use("/favourite", favouriteRoute);
+app.use("/mealplan", mealPlanRoute);
 
 app.listen(3001, () => {
   console.log("Server listening on port 3001");
