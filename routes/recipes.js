@@ -12,29 +12,13 @@ router.get('/search', async (req, res) => {
 
     // Find recipes containing all specified ingredients
     const recipes = await Recipe.find({
-      ingredients: { $all: ingredientsArray },
+      'ingredients.name': { $in: ingredientsArray },
     });
 
     res.status(200).json(recipes);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
-  }
-});
-
-router.get('/', async (req, res) => {
-  const { ingredients } = req.query;
-  try {
-    const query = ingredients
-      ? {
-          ingredients: { $all: ingredients.split(',') },
-        }
-      : {};
-
-    const recipes = await Recipe.find(query);
-    res.status(200).json(recipes);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching recipes' });
   }
 });
 
@@ -49,5 +33,6 @@ router.get("/:id", async (req, res) => {
     res.send("Error " + err);
   }
 });
+
 
 module.exports = router; 
