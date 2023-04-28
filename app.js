@@ -4,10 +4,14 @@ const cors = require("cors");
 const app = express();
 const dotenv = require("dotenv");
 app.use(express.json());
+
 app.use(cors({ origin: "http://localhost:3000" }));
 
 const ingredientsRoute = require('./routes/selected-ingredients');
 const recipesRoute = require('./routes/recipes');
+const usersRoute = require('./routes/users');
+const favouriteRoute = require('./routes/favourites');
+const mealPlanRoute = require('./routes/mealplans');
 
 // connect to MongoDB database
 dotenv.config(); // Load environment variables
@@ -22,6 +26,9 @@ mongoose
 
   app.use('/selected-ingredients', ingredientsRoute);
   app.use('/recipes', recipesRoute);
+  app.use('/favourite', favouriteRoute);
+  app.use('/mealplan', mealPlanRoute);
+  app.use('/users', usersRoute);
 
 // const userSchema = new mongoose.Schema({
 //   email: {
@@ -44,15 +51,7 @@ mongoose
 //   // }
 // });
 
-// const mealPlanSchema = new mongoose.Schema(
-//   {
-//     dayOfWeek: { type: String, required: true },
-//     recipeId: [
-//       { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Recipe" },
-//     ],
-//   },
-//   { timestamps: true }
-// );
+
 
 // // define schema for recipes
 // const recipeSchema = new mongoose.Schema({
@@ -93,13 +92,6 @@ mongoose
 //   { timestamps: true }
 // );
 
-// const favoriteSchema = new mongoose.Schema({
-//   recipeId: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     required: true,
-//     ref: "Recipe",
-//   },
-// });
 // const checkboxSchema = new mongoose.Schema({
 //   checkboxValue: { type: Boolean, default: false },
 // });
@@ -114,59 +106,6 @@ mongoose
 
 
 
-app.delete("/favorites/:id", async (req, res) => {
-  try {
-    const favoriteId = req.params.id;
-    const deletedFavorite = await Favorite.findOneAndDelete(favoriteId);
-    if (!deletedFavorite) {
-      return res.status(404).send("Favorite not found");
-    }
-    res.json({ message: "Favorite deleted successfully" });
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
-
-app.post("/favorites", async (req, res) => {
-  try {
-    const { recipeId } = req.body;
-
-    const recipe = await Recipe.findOne({ id: recipeId });
-    if (!recipe) {
-      return res.status(404).send("Recipe not found");
-    }
-
-    const favorite = new Favorite({ recipeId: recipe._id });
-    await favorite.save();
-    res.json(favorite);
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
-
-app.get("/favorites", async (req, res) => {
-  try {
-    const favorites = await Favorite.find().populate({
-      path: "recipeId",
-      select: "name id",
-    });
-    res.json(favorites);
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
-
-app.get("/favorites/:id", async (req, res) => {
-  try {
-    const favorites = await Favorite.find().populate({
-      path: "recipeId",
-      select: "name id",
-    });
-    res.json(favorites);
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
 
 // app.post("/saveEmail", (req, res) => {
 //   // Extract the id_token from the authentication response
@@ -235,110 +174,6 @@ app.get("/favorites/:id", async (req, res) => {
 //   // });
 // });
 
-// get all recipes
-app.get("/recipe", async (req, res) => {
-  try {
-    const recipes = await Recipe.find();
-    //returns data in json format
-    res.json(recipes);
-  } catch (err) {
-    res.send("Error " + err);
-  }
-});
-
-//get by id
-app.get("/recipe/:id", async (req, res) => {
-  try {
-    //params cause finding by url
-    const recipes = await Recipe.findOne({ id: req.params.id });
-    //await Recipe.findById(req.params.id);
-    //returns data in json format
-    res.json(recipes);
-  } catch (err) {
-    res.send("Error " + err);
-  }
-});
-
-app.post("/recipe", async (req, res) => {
-  const { ingredients } = req.body;
-
-  try {
-    await client.connect();
-
-    const db = client.db("recipeDB");
-    const collection = db.collection("recipes");
-
-    const recipes = await collection
-      .find({
-        ingredients: { $in: ingredients },
-      })
-      .toArray();
-
-    res.send(recipes);
-    console.log(recipes);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Something went wrong");
-  }
-});
-
-app.get("/mealplans", async (req, res) => {
-  try {
-    const mealPlans = await MealPlan.find().populate("recipeId");
-    res.json(mealPlans);
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
-
-// create meal plan
-app.post("/mealplans", async (req, res) => {
-  try {
-    const { dayOfWeek, recipeId } = req.body;
-
-    // check if the recipes exist
-    const recipes = await Recipe.findById(recipeId);
-    if (!recipes) {
-      return res.status(404).send("Recipe not found");
-    }
-
-    const mealPlan = new MealPlan({
-      dayOfWeek,
-      recipeId,
-    });
-
-    await mealPlan.save();
-    res.json(mealPlan);
-  } catch (err) {
-    res.status(500).send(err);
-    console.log(err);
-  }
-});
-
-// define a route to handle updates
-app.put("/mealplans/:id", async (req, res) => {
-  const id = req.params.id;
-
-  // find the existing meal plan by id
-  let mealPlan = await MealPlan.findById(id);
-
-  if (!mealPlan) {
-    return res.status(404).send({ error: "Meal plan not found" });
-  }
-
-  // update the fields you want to change
-  mealPlan.dayOfWeek = req.body.dayOfWeek;
-  mealPlan.recipeId = req.body.recipeId;
-
-  // save the updated meal plan
-  try {
-    mealPlan = await mealPlan.save();
-    res.send(mealPlan);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send({ error: "Failed to update meal plan" });
-  }
-});
 
 app.get("/ingredients", async (req, res) => {
   try {
