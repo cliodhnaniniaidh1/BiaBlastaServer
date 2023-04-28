@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const Ingredient = require('../models/ingredient');
 const Recipe = require('../models/recipe');
 
 router.get('/search', async (req, res) => {
@@ -21,6 +20,15 @@ router.get('/search', async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+router.get("/", async(req,res) =>{
+  try {
+    const recipe = await Recipe.find();
+    res.json(recipe);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+})
 
 //get by id
 router.get("/:id", async (req, res) => {
